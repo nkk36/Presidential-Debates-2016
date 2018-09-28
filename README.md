@@ -13,3 +13,4 @@ Repository for a text analysis I'm working on.
 ## Notes
 
 * Conduct parameter tuning as shown [here](http://www.bernhardlearns.com/2017/05/topic-models-lda-and-ctm-in-r-with.html) or use perplexity as shown [here](https://cfss.uchicago.edu/text_topicmodels.html#lda_with_an_unknown_topic_structure)
+* Another [similar](http://www.aei.org/wp-content/uploads/2016/04/The-candidates-in-their-own-words.pdf) analysis by a researcher at AEI
