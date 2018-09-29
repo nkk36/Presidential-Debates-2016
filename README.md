@@ -17,4 +17,4 @@ Repository for a text analysis I'm working on.
 * Another [similar](http://www.aei.org/wp-content/uploads/2016/04/The-candidates-in-their-own-words.pdf) analysis by a researcher at AEI
 * Topic Models [vignette](https://cran.r-project.org/web/packages/topicmodels/vignettes/topicmodels.pdf)
 * Relevant [post](https://juliasilge.com/blog/evaluating-stm/) 
-* [Vignette] (https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf) for using R's TM package
+* [Vignette](https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf) for using R's TM package
