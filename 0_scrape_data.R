@@ -15,7 +15,7 @@ urls = c("http://www.presidency.ucsb.edu/ws/index.php?pid=110489",
          "http://www.presidency.ucsb.edu/ws/index.php?pid=111177",
          "http://www.presidency.ucsb.edu/ws/index.php?pid=111395",
          "http://www.presidency.ucsb.edu/ws/index.php?pid=111412",
-         "http://www.presidency.ucsb.edu/ws/index.php?pid=111412",
+         "http://www.presidency.ucsb.edu/ws/index.php?pid=111472",
          "http://www.presidency.ucsb.edu/ws/index.php?pid=111500",
          "http://www.presidency.ucsb.edu/ws/index.php?pid=111634",
          "http://www.presidency.ucsb.edu/ws/index.php?pid=111711",
@@ -125,7 +125,7 @@ for (url in urls) {
                                     "GARRETT:", "HANNITY:", "CUOMO:", "DINAN:", "COOPER:", "LEMON:", "WILKINS:", "LOPEZ:", 
                                     "CORDES:", "COONEY:", "OBRADOVICH:", "RADDATZ:", "MUIR:", "MCELVEEN:", "HOLT:", "MITCHELL:", 
                                     "TODD:", "MADDOW:", "WOODRUFF:", "IFILL:", "RAMOS:", "SALINAS:", "TUMULTY:", "LOUIS:", 
-                                    "QUIJANO:")){
+                                    "QUIJANO:", "HAM:")){
       speakers[i] = "MODERATOR(S)"
     } else if (trimws(text_extract) %in% c("UNKNOWN:", "UNIDENTIFIABLE:", "MALE:")){
       speakers[i] = "UNKNOWN"
