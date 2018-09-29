@@ -1,8 +1,10 @@
 # Setup ====
 
 # Load packages
+library(NLP)
 library(stringi)
 library(stringr)
+library(tm)
 
 
 # Load data ====
@@ -54,3 +56,36 @@ save(Document_List, file = "data/1_concatenated_text.RData")
 
 # Load data ====
 load("data/1_concatenated_text.RData")
+# Convert list to data frame of text documents ====
+
+debates = names(Document_List)
+k = 1
+d = c()
+s = c()
+t = c()
+
+for (i in 1:length(Document_List)){
+  
+  speakers = names(Document_List[[debates[i]]])
+  
+  for (j in 1:length(speakers)){
+    d[k] = debates[i]
+    s[k] = speakers[j]
+    t[k] = Document_List[[i]][[j]]
+    k = k+1
+  }
+}
+
+df = data.frame(Debate = d,
+                Speaker = s,
+                Document = t)
+
+remove(Document_List, d, debates, i, j, k, s, speakers, t)
+
+# Write data frame to disc ====
+
+write.csv(df, file = "data/2_data_frame_documents.csv", row.names = FALSE)
+
+# Read in data frame of documents ====
+
+df = read.csv("data/2_data_frame_documents.csv")
