@@ -25,3 +25,5 @@ dtm = DocumentTermMatrix(corpus, control = list(weighting = weightTf))
 # Run LDA ====
 
 lda = LDA(x = dtm, k = 10, method = "VEM", control = NULL, model = NULL)
+
+terms_lda = terms(lda, 10)
