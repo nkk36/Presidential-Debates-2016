@@ -88,7 +88,11 @@ df = data.frame(date = d,
 df$doc_id = 1:nrow(df)
 
 df = df %>%
-  select(doc_id, text, date, debate, speaker)
+  select(doc_id, text, date, debate, speaker) %>%
+  mutate(party = ifelse(speaker %in% c("TRUMP", "PAUL", "CARSON", "RUBIO", "BUSH", "CRUZ", "CHRISTIE", "WALKER", 
+                                       "HUCKABEE", "KASICH", "PERRY", "FIORINA", "PENCE"), "Republican", "Democrat"))
+
+
 
 remove(Document_List, d, debates, i, j, k, s, speakers, t, db)
 
@@ -155,6 +159,7 @@ for (i in 1:length(corpus)){
   meta(corpus[[i]], tag = "author", type = "local") = df$speaker[i]
   meta(corpus[[i]], tag = "date", type = "local") = df$date[i]
   meta(corpus[[i]], tag = "debate", type = "local") = df$debate[i]
+  meta(corpus[[i]], tag = "party", type = "local") = df$party[i]
 }
 
 remove(i)

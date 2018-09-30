@@ -5,6 +5,7 @@ library(ldatuning)
 library(magrittr) 
 library(NLP)
 library(slam)
+library(stm)
 library(stringi)
 library(stringr)
 library(tidytext) 
@@ -43,7 +44,7 @@ summary(col_sums(dtm))
 dim(dtm)
 
 
-# Run LDA ====
+# LDA Tuning ====
 
 control_list_gibbs = list(burnin = 2500,
                           iter = 5000,
@@ -52,18 +53,35 @@ control_list_gibbs = list(burnin = 2500,
                           best = TRUE)
 
 system.time(expr = topic_number <- FindTopicsNumber(dtm = dtm,
-                                    topics = c(seq(from = 2, to = 9, by = 1), seq(10, 20, 2), seq(25, 50, 5)),
-                                    metrics = c( "Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
-                                    method = "Gibbs",
-                                    control = control_list_gibbs,
-                                    mc.cores = 2,
-                                    verbose = TRUE))
-
-FindTopicsNumber_plot(topic_number)
+                                                    topics = c(seq(from = 2, to = 9, by = 1), seq(10, 20, 2), seq(25, 50, 5)),
+                                                    metrics = c( "Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
+                                                    method = "Gibbs",
+                                                    control = control_list_gibbs,
+                                                    mc.cores = 2,
+                                                    verbose = TRUE))
 
 custom_FindTopicsNumber_plot(topic_number, b = seq(0,50,5))
 
-lda = LDA(x = dtm, k = 10, method = "VEM", control = NULL, model = NULL)
+# Run LDA ====
+
+lda = LDA(x = dtm, k = 13, method = "Gibbs", control = control_list_gibbs)
+
+terms_lda = terms(lda, 5)
+
+# LDA Evaluation ====
+
+lemma_tm = lda %>%
+  mutate(lda_gamma = map(.x=lda, 
+                         .f=tidytext::tidy, 
+                         matrix="gamma"))
 
 
-terms_lda = terms(lda, 10)
+
+
+# CTM ====
+
+
+
+# STM ====
+
+stmdtm <- convert(dtm, to = "stm", docvars = docvars(corpus))
