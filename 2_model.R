@@ -2,6 +2,7 @@
 
 # Load packages
 library(dplyr)
+library(flipTime)
 library(ldatuning)
 library(magrittr) 
 library(NLP)
@@ -24,6 +25,8 @@ source("R/reorder_within.R", chdir = T)
 load("data/3_cleaned_corpus.RData")
 
 df = read.csv("data/2_data_frame_documents.csv")
+
+df$date = AsDate(as.character(df$date))
 
 
 # Convert to document term matrix ====
@@ -89,54 +92,138 @@ lemma_tm = lda %>%
 
 # STM ====
 
-t = tidy(corpus)
+corpus_df = tidy(corpus)
+corpus_df$date = as.numeric(corpus_df$date)
 
-processed = textProcessor(t$text, metadata = t)
-out = prepDocuments(processed$documents, processed$vocab, processed$meta)
+# Process the text and the metadata
+processed = textProcessor(documents = df$text, metadata = df)
+processed = textProcessor(documents = corpus_df$text, 
+                          metadata = corpus_df,
+                          lowercase = FALSE,
+                          removestopwords = FALSE,
+                          removenumbers = FALSE,
+                          removepunctuation = FALSE,
+                          stem = FALSE)
+
+
+# Plot the number of documents/words/tokens removed using different threshold
+plotRemoved(processed$documents, lower.thresh = seq(1, 50, by = 1))
+
+# Prep for the STM model
+out = prepDocuments(documents = processed$documents, 
+                    vocab = processed$vocab, 
+                    meta = processed$meta,
+                    lower.thresh = 10)
 docs = out$documents
 vocab = out$vocab
 meta = out$meta
 
-stm_no_covariate = stm(documents = out$documents, 
-          vocab = out$vocab,
-          K = 20, 
-          prevalence =~ party,
-          max.em.its = 75, 
-          data = out$meta,
-          init.type = "Spectral")
+# Run model
+stm_model = stm(documents = out$documents, 
+                vocab = out$vocab,
+                K = 0, 
+                prevalence =~ party + s(date),
+                max.em.its = 75, 
+                data = out$meta,
+                init.type = "Spectral")
 
-labelTopics(stm, c(6))
+# Evaluate model
 
-plot(stm_no_covariate, type = "summary", xlim = c(0, .3), labeltype = "frex")
+# Give top words of each topic
+labelTopics(model = stm_model, 
+            topics = 59, 
+            n = 10)
+
+#15, 62, 34, 32, 28
 
 
-td_beta <- tidy(stm_no_covariate)
+# Plot
+plot(stm_model, 
+     type = "summary", 
+     topics = 1:20,
+     xlim = c(0, .3), 
+     labeltype = "frex")
 
-td_beta %>%
-  group_by(topic) %>%
-  top_n(10, beta) %>%
-  ungroup() %>%
-  mutate(topic = paste0("Topic ", topic),
-         term = reorder_within(term, beta, topic)) %>%
-  ggplot(aes(term, beta, fill = as.factor(topic))) +
-  geom_col(alpha = 0.8, show.legend = FALSE) +
-  facet_wrap(~ topic, scales = "free_y") +
-  coord_flip() +
-  scale_x_reordered() +
-  labs(x = NULL, y = expression(beta),
-       title = "Highest word probabilities for each topic",
-       subtitle = "Different words are associated with different topics")
+plot(stm_model, 
+     type = "labels", 
+     topics = c(3,12),
+     xlim = c(0, .3), 
+     labeltype = "prob")
 
-prep <- estimateEffect(1:20 ~ party, stm, meta = out$meta, uncertainty = "Global")
+# Run model with content
+stm_model_content = stm(out$documents, 
+                        out$vocab, 
+                        K = 69,
+                        prevalence =~ party + s(date), 
+                        content =~ party,
+                        max.em.its = 75, 
+                        data = out$meta, 
+                        init.type = "Spectral")
 
-stm = stm(documents = out$documents, 
-          vocab = out$vocab,
-          K = 20, 
-          prevalence =~ party,
-          max.em.its = 75, 
-          data = out$meta,
-          init.type = "Spectral",
-          content =~ party)
+# Evaluate model with content (topic 8)
+plot(stm_model_content, 
+     type = "perspectives",
+     n = 12,
+     topics = 8)
+
+# Give top words of each topic
+labelTopics(model = stm_model_content, 
+            topics = 52, 
+            n = 10)
+
+# Find thoughts and plot quote
+t = findThoughts(model = stm_model, texts = as.character(df$text), topics = 1, n = 3)$docs[[1]]
+plotQuote(sentences = t)
+
+# td_beta <- tidy(stm_model)
+# 
+# td_beta %>%
+#   group_by(topic) %>%
+#   top_n(10, beta) %>%
+#   ungroup() %>%
+#   mutate(topic = paste0("Topic ", topic),
+#          term = reorder_within(term, beta, topic)) %>%
+#   ggplot(aes(term, beta, fill = as.factor(topic))) +
+#   geom_col(alpha = 0.8, show.legend = FALSE) +
+#   facet_wrap(~ topic, scales = "free_y") +
+#   coord_flip() +
+#   scale_x_reordered() +
+#   labs(x = NULL, y = expression(beta),
+#        title = "Highest word probabilities for each topic",
+#        subtitle = "Different words are associated with different topics")
+
+# Run model with covariate
+# prep = estimateEffect(1:20 ~ party, stm, meta = out$meta, uncertainty = "Global")
+out$meta$party = as.factor(out$meta$party)
+prep = estimateEffect(formula = 1:69 ~ party + s(date), 
+                      stmobj = stm_model,
+                      meta = out$meta, 
+                      uncertainty = "Global")
+
+# Evaluate model
+
+plot.estimateEffect(x = prep, 
+                    covariate = "date", 
+                    method = "continuous", 
+                    topics = 1, 
+                    model = stm_model, 
+                    printlegend = TRUE, 
+                    xaxt = "n", 
+                    xlab = "Time")
+x_date = as.Date(df$date)
+axis(1, x_date, format(x_date, "%b %d %Y"), cex.axis = .7)
+#text(x_date, par("usr")[3] - 0.2, labels = format(x_date, "%b %d %Y"), srt = 45, pos = 1, xpd = TRUE)
+
+
+
+# stm = stm(documents = out$documents, 
+#           vocab = out$vocab,
+#           K = 20, 
+#           prevalence =~ party,
+#           max.em.its = 75, 
+#           data = out$meta,
+#           init.type = "Spectral",
+#           content =~ party)
 
 plot(prep, 
      covariate = "party", 
