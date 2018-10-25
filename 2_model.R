@@ -86,17 +86,17 @@ lemma_tm = lda %>%
 
 
 
-# CTM ====
+#### CTM ====
 
 
 
-# STM ====
-
+#### STM ====
+# Setup for STM model ====
 corpus_df = tidy(corpus)
 corpus_df$date = as.numeric(corpus_df$date)
 
 # Process the text and the metadata
-processed = textProcessor(documents = df$text, metadata = df)
+#processed = textProcessor(documents = df$text, metadata = df)
 processed = textProcessor(documents = corpus_df$text, 
                           metadata = corpus_df,
                           lowercase = FALSE,
@@ -118,20 +118,21 @@ docs = out$documents
 vocab = out$vocab
 meta = out$meta
 
+# Run STM estimation ====
 # Run model
 stm_model = stm(documents = out$documents, 
                 vocab = out$vocab,
                 K = 0, 
-                prevalence =~ party + s(date),
-                max.em.its = 75, 
+                prevalence =~ party + s(date) + author, 
                 data = out$meta,
                 init.type = "Spectral")
 
-# Evaluate model
+# Evaluate model ====
 
+# Evaluate model
 # Give top words of each topic
 labelTopics(model = stm_model, 
-            topics = 59, 
+            topics = 15, 
             n = 10)
 
 #15, 62, 34, 32, 28
@@ -150,16 +151,18 @@ plot(stm_model,
      xlim = c(0, .3), 
      labeltype = "prob")
 
+# Run STM estimation with content ====
 # Run model with content
 stm_model_content = stm(out$documents, 
                         out$vocab, 
                         K = 69,
-                        prevalence =~ party + s(date), 
+                        prevalence =~ party + s(date) + author, 
                         content =~ party,
                         max.em.its = 75, 
                         data = out$meta, 
                         init.type = "Spectral")
 
+# Evaluate STM model with content ====
 # Evaluate model with content (topic 8)
 plot(stm_model_content, 
      type = "perspectives",
@@ -192,20 +195,27 @@ plotQuote(sentences = t)
 #        title = "Highest word probabilities for each topic",
 #        subtitle = "Different words are associated with different topics")
 
+# Estimate effect of covariate ====
 # Run model with covariate
 # prep = estimateEffect(1:20 ~ party, stm, meta = out$meta, uncertainty = "Global")
 out$meta$party = as.factor(out$meta$party)
-prep = estimateEffect(formula = 1:69 ~ party + s(date), 
+out$meta$author = as.factor(out$meta$author)
+prep = estimateEffect(formula = 1:59 ~ party + s(date) + author, 
                       stmobj = stm_model,
                       meta = out$meta, 
                       uncertainty = "Global")
-
+# Evaluate model with covariate
 # Evaluate model
+# Topic 7
+# Give top words of each topic
+labelTopics(model = stm_model, 
+            topics = 7, 
+            n = 10)
 
 plot.estimateEffect(x = prep, 
                     covariate = "date", 
                     method = "continuous", 
-                    topics = 1, 
+                    topics = 7, 
                     model = stm_model, 
                     printlegend = TRUE, 
                     xaxt = "n", 
@@ -228,17 +238,51 @@ axis(1, x_date, format(x_date, "%b %d %Y"), cex.axis = .7)
 plot(prep, 
      covariate = "party", 
      topics = seq(1,20,1),
-     model = stm, 
+     model = stm_model, 
      method = "difference",
      cov.value1 = "Republican", 
      cov.value2 = "Democrat",
      xlab = "More Republican ... More Democrat",
      main = "Effect of Liberal vs. Conservative",
-     xlim = c(-.5, .5), 
+     xlim = c(-1, 1), 
      labeltype = "lift")
 
 
 
+# Topic 3
+# Give top words of each topic
+labelTopics(model = stm_model, 
+            topics = 3, 
+            n = 10)
 
+plot(prep, 
+     covariate = "party", 
+     topics = 3,
+     model = stm_model, 
+     method = "difference",
+     cov.value1 = "Republican", 
+     cov.value2 = "Democrat",
+     xlab = "More Republican ... More Democrat",
+     main = "Effect of Democrat vs. Republican",
+     xlim = c(-1, 1), 
+     labeltype = "lift")
+
+# Topic 5
+# Give top words of each topic
+labelTopics(model = stm_model, 
+            topics = 5, 
+            n = 10)
+
+plot(prep, 
+     covariate = "party", 
+     topics = 5,
+     model = stm_model, 
+     method = "difference",
+     cov.value1 = "Republican", 
+     cov.value2 = "Democrat",
+     xlab = "More Republican ... More Democrat",
+     main = "Effect of Democrat vs. Republican",
+     xlim = c(-1, 1), 
+     labeltype = "lift")
 
 
