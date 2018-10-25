@@ -125,7 +125,16 @@ stm_model = stm(documents = out$documents,
                 K = 0, 
                 prevalence =~ party + s(date) + author, 
                 data = out$meta,
-                init.type = "Spectral")
+                init.type = "Spectral",
+                seed = 123)
+
+# Loop through main word of each topic ====
+
+for (i in 1:stm_model$settings$dim$K){
+  print(labelTopics(model = stm_model, 
+                    topics = i, 
+                    n = 10))
+}
 
 # Evaluate model ====
 
@@ -151,71 +160,28 @@ plot(stm_model,
      xlim = c(0, .3), 
      labeltype = "prob")
 
-# Run STM estimation with content ====
-# Run model with content
-stm_model_content = stm(out$documents, 
-                        out$vocab, 
-                        K = 69,
-                        prevalence =~ party + s(date) + author, 
-                        content =~ party,
-                        max.em.its = 75, 
-                        data = out$meta, 
-                        init.type = "Spectral")
-
-# Evaluate STM model with content ====
-# Evaluate model with content (topic 8)
-plot(stm_model_content, 
-     type = "perspectives",
-     n = 12,
-     topics = 8)
-
-# Give top words of each topic
-labelTopics(model = stm_model_content, 
-            topics = 52, 
-            n = 10)
-
-# Find thoughts and plot quote
-t = findThoughts(model = stm_model, texts = as.character(df$text), topics = 1, n = 3)$docs[[1]]
-plotQuote(sentences = t)
-
-# td_beta <- tidy(stm_model)
-# 
-# td_beta %>%
-#   group_by(topic) %>%
-#   top_n(10, beta) %>%
-#   ungroup() %>%
-#   mutate(topic = paste0("Topic ", topic),
-#          term = reorder_within(term, beta, topic)) %>%
-#   ggplot(aes(term, beta, fill = as.factor(topic))) +
-#   geom_col(alpha = 0.8, show.legend = FALSE) +
-#   facet_wrap(~ topic, scales = "free_y") +
-#   coord_flip() +
-#   scale_x_reordered() +
-#   labs(x = NULL, y = expression(beta),
-#        title = "Highest word probabilities for each topic",
-#        subtitle = "Different words are associated with different topics")
-
 # Estimate effect of covariate ====
 # Run model with covariate
 # prep = estimateEffect(1:20 ~ party, stm, meta = out$meta, uncertainty = "Global")
 out$meta$party = as.factor(out$meta$party)
 out$meta$author = as.factor(out$meta$author)
-prep = estimateEffect(formula = 1:59 ~ party + s(date) + author, 
+prep = estimateEffect(formula = 1:61 ~ s(date) + party, 
                       stmobj = stm_model,
                       meta = out$meta, 
                       uncertainty = "Global")
-# Evaluate model with covariate
-# Evaluate model
-# Topic 7
+
+# Evaluate effect of covariate ====
+
+# Topic 26
 # Give top words of each topic
 labelTopics(model = stm_model, 
-            topics = 7, 
+            topics = 26, 
             n = 10)
 
 plot.estimateEffect(x = prep, 
                     covariate = "date", 
                     method = "continuous", 
-                    topics = 7, 
+                    topics = 26, 
                     model = stm_model, 
                     printlegend = TRUE, 
                     xaxt = "n", 
@@ -224,7 +190,22 @@ x_date = as.Date(df$date)
 axis(1, x_date, format(x_date, "%b %d %Y"), cex.axis = .7)
 #text(x_date, par("usr")[3] - 0.2, labels = format(x_date, "%b %d %Y"), srt = 45, pos = 1, xpd = TRUE)
 
+# Topic 9
+# Give top words of each topic
+labelTopics(model = stm_model, 
+            topics = 9, 
+            n = 10)
 
+plot.estimateEffect(x = prep, 
+                    covariate = "date", 
+                    method = "continuous", 
+                    topics = 55, 
+                    model = stm_model, 
+                    printlegend = TRUE, 
+                    xaxt = "n", 
+                    xlab = "Time")
+x_date = as.Date(df$date)
+axis(1, x_date, format(x_date, "%b %d %Y"), cex.axis = .7)
 
 # stm = stm(documents = out$documents, 
 #           vocab = out$vocab,
@@ -286,3 +267,47 @@ plot(prep,
      labeltype = "lift")
 
 
+
+# Run STM estimation with content ====
+# Run model with content
+stm_model_content = stm(out$documents, 
+                        out$vocab, 
+                        K = 69,
+                        prevalence =~ party + s(date) + author, 
+                        content =~ party,
+                        max.em.its = 75, 
+                        data = out$meta, 
+                        init.type = "Spectral")
+
+# Evaluate STM model with content ====
+# Evaluate model with content (topic 8)
+plot(stm_model_content, 
+     type = "perspectives",
+     n = 12,
+     topics = 8)
+
+# Give top words of each topic
+labelTopics(model = stm_model_content, 
+            topics = 52, 
+            n = 10)
+
+# Find thoughts and plot quote
+t = findThoughts(model = stm_model, texts = as.character(df$text), topics = 1, n = 3)$docs[[1]]
+plotQuote(sentences = t)
+
+# td_beta <- tidy(stm_model)
+# 
+# td_beta %>%
+#   group_by(topic) %>%
+#   top_n(10, beta) %>%
+#   ungroup() %>%
+#   mutate(topic = paste0("Topic ", topic),
+#          term = reorder_within(term, beta, topic)) %>%
+#   ggplot(aes(term, beta, fill = as.factor(topic))) +
+#   geom_col(alpha = 0.8, show.legend = FALSE) +
+#   facet_wrap(~ topic, scales = "free_y") +
+#   coord_flip() +
+#   scale_x_reordered() +
+#   labs(x = NULL, y = expression(beta),
+#        title = "Highest word probabilities for each topic",
+#        subtitle = "Different words are associated with different topics")
